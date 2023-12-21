@@ -1,6 +1,6 @@
 How to set up the Voice Chat Notifier Bot.
 
-DISCLAIMER, the Bot can be run on any PC which has python and pip installed (https://www.python.org/downloads/). However, in order for the bot to be effective, it is recommended to have the bot hosted somewhere so that it runs 24/7.
+DISCLAIMER, the Bot can be run on any PC which has python and pip installed (https://www.python.org/downloads/). However, in order for the bot to be effective, it is recommended to have the bot hosted somewhere so that it runs 24/7. This guide does not cover how to install python and pip, nor does it cover how to install the discord python package (Microsoft Visual Studio C++ Version 14 required). You'll need these as pre-requisities before you can continue on. Ask Bard AI for instructions on that or something...
 
 1. Go to https://discord.com/developers/applications and create a new application. Give the bot a name.
 2. You'll be provided an Application ID and a Public Key. Note these somewhere safe.
