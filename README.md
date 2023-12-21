@@ -29,6 +29,7 @@ DISCLAIMER, the Bot can be run on any PC which has python and pip installed (htt
 12. Create another text channel, call it something like "vc-notifications". Edit the permissions of this channel so that only the "vcnotifs" role above can see it. Then right click that text channel and copy the channel ID.
 13. Edit the Python script to include the text channel ID within the variable labelled: target_channel_id. So it should look something like:
     - target_channel_id = 1187708923470234879523
+
 This will tell the bot to send notifications to the vc-notifications channel, and only users who have opted in (and been assigned the vcnotifs role) will receive the notification.
       
 14. Edit the Python script to include the Bot Token you copied earlier. Insert the Token within the client.run function at the bottom of the code, it should look like:
