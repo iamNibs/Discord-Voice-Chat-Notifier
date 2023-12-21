@@ -17,7 +17,7 @@ DISCLAIMER, the Bot can be run on any PC which has python and pip installed (htt
    - Server Members Intent
    - Message Content Intent
      
-6. Within the same section, there are Bot Permissions at the bottom, tick on the same boxes wich you did for Step 3.
+6. Within the same section, there are Bot Permissions at the bottom, tick on the same boxes wich you did for Step 3
 7. At the bottom of the page will be a permissions integer, onces all boxes are ticked, copy this number and hold it in the same notepad as the Bot Token for later on.
 8. Enable developer mode on Discord. Go to Settings > Advanced and then enable the Developer Mode switch.
 
