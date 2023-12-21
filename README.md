@@ -42,5 +42,4 @@ This will tell the bot to send notifications to the vc-notifications channel, an
 16. Paste the link into a browser, if all works, you should get the typical bot auth page that shows up when adding bots.
 17. Once you've added the bot to your server. You'll need to start running the script. Assuming that you either have a server to run the script from, or you've installed Python on your current machine/PC, click on the python file and it should boot.
 18. The terminal should advise if the sign-in to the Gateway was successful. You should then see your Discord bot online with the server you added it to.
-19. Create another text channel beneath 
-20. Type in !optin and !optout within a text channel on your server, the bot should then reply to confirm you've opted in or out aoccrdingly. 
+19. Type in !optin and !optout within a text channel on your server, the bot should then reply to confirm you've opted in or out aoccrdingly. 
