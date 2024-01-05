@@ -1,62 +1,101 @@
 import discord
-# REMEMBER TO TURN ON DEVELOPER MODE WITHIN DISCORD SO YOU CAN COPY THE IDs OF THE TEXT CHANNEL AND ROLES INVOLVED.
-# ALSO MAKE SURE TO INSERT THE BOT TOKEN AT THE BOTTOM OF THE CODE.
-intents = discord.Intents.default()
-intents.voice_states = True
-intents.members = True  # To access member roles
-intents.message_content = True  # Required for mentions
+import os
+import datetime
+from discord import Intents
 
+intents = Intents.default()  # Enable all default intents
+intents.message_content = True  # Required for reading message content
 client = discord.Client(intents=intents)
+intents.voice_states = True
 
-target_channel_id = TEXT CHANNEL ID GOES HERE.  # Replace with the ID of the text channel E.G. 118897034986753098456
-notification_role_id = ROLE ID GOES HERE  # ID of the role for notification opt-in E.G. 118897009834509834590834
+# Replace with your Discord bot token
+TOKEN = 'MTE4NzA3MzU2MDAyODY0NzQzNA.G3C0rw.C4vGiBbP4b6bvQvS-1ZrRRsz0XMKPcBJ0K-2KM'
 
-opt_in_members = set()  # Store members who have opted in
+# Channel and role IDs
+CHANNEL_ID = 1187174405051265054
+ROLE_ID = 1187147830985511033
+
+# File to store opted-in member IDs
+OPTED_IN_FILE = 'opted_in_members.txt'
+
+# IDs of voice channels to exclude from notifications
+EXCLUDED_VOICE_CHANNEL_IDS = [880167821441650748, 979115993609691196]
 
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
 
-@client.event
-async def on_voice_state_update(member, before, after):
-    if before.channel is None and after.channel is not None:  # Member joined a voice channel
-        channel = after.channel
-        message = f'{member.mention} has joined {channel.mention}!'
+    # Load opted-in members from file
+    try:
+        with open(OPTED_IN_FILE, 'r') as f:
+            opted_in_members = set(int(line.strip()) for line in f)
+            print('Member added to memory from file')
+    except FileNotFoundError:
+        opted_in_members = set()
 
-        if member in opt_in_members:
-            target_channel = client.get_channel(target_channel_id)
-            if target_channel is not None:
-                try:
-                    # Tag each opted-in member in the target channel
-                    for opted_in_member in opt_in_members:
-                        message += f" {opted_in_member.mention}"
-                    await target_channel.send(message)
-                except discord.Forbidden:
-                    print(f"Error: Bot cannot send messages in {target_channel.mention}. Check permissions.")
-            else:
-                print(f"Error: Text channel with ID {target_channel_id} not found.")
+async def opt_out(member, message):
+    role = discord.utils.get(member.guild.roles, id=ROLE_ID)
+    if role is not None:
+        await member.remove_roles(role) # remove_roles is available as a method on the Member class, provided by the discord.py library.
+        with open(OPTED_IN_FILE, 'r') as f:
+            lines = f.readlines()
+        with open(OPTED_IN_FILE, 'w') as f:
+            for line in lines:
+                if int(line.strip()) != member.id:
+                    f.write(line)
+        await message.channel.send(f"{member.mention}, you've opted out of voice channel notifications!")
 
 @client.event
 async def on_message(message):
     if message.author == client.user:
-        return  # Ignore the bot's own messages
+        return
 
     if message.content.lower() == '!optin':
-        notification_role = discord.utils.get(message.guild.roles, id=notification_role_id) #Calls to the notification_role_id variable at the top to determine what role should be assigned to the user.
-        if notification_role is not None:
-            await message.author.add_roles(notification_role)
-            opt_in_members.add(message.author)
-            await message.channel.send(f"You've opted in to receive voice channel notifications.")
-        else:
-            await message.channel.send("Error: Notification role not found. Please contact server admins.")
+        await opt_in(message.author, message)
 
     if message.content.lower() == '!optout':
-        notification_role = discord.utils.get(message.guild.roles, id=notification_role_id)
-        if notification_role is not None:
-            await message.author.remove_roles(notification_role)
-            opt_in_members.remove(message.author)
-            await message.channel.send(f"You've opted out of voice channel notifications.")
-        else:
-            await message.channel.send("Error: Notification role not found. Please contact server admins.")
+        await opt_out(message.author, message)
 
-client.run('TOKEN GOES HERE')  # Replace with your actual bot token
+@client.event
+async def on_voice_state_update(member, before, after):
+    if after.channel is not None and before.channel is not None and after.channel != before.channel:  # Member switched voice channels
+        channel = client.get_channel(CHANNEL_ID)
+        if channel is not None and after.channel.id not in EXCLUDED_VOICE_CHANNEL_IDS:
+            await notify_opted_in(channel, member)
+
+    if after.channel is not None and before.channel is None:  # Member joined a voice channel
+        channel = client.get_channel(CHANNEL_ID)
+        if channel is not None:
+            await notify_opted_in(channel, member)
+
+async def opt_in(member, message):
+    opted_in_members = get_opted_in_members()
+    if member.id in opted_in_members:
+        channel = message.channel # Use the message's channel
+        await channel.send(f"{member.mention}, you're already opted in for voice channel notifications!")
+        return
+
+    role = discord.utils.get(member.guild.roles, id=ROLE_ID)
+    if role is not None:
+        await member.add_roles(role)
+        with open(OPTED_IN_FILE, 'a', newline='\n') as f:
+            f.write(f'\n{member.id}')
+        channel = message.channel # Use the message's channel
+        await channel.send(f"{member.mention}, You've opted in to voice channel notifications! You'll now receive notifications in {client.get_channel(CHANNEL_ID)}")
+
+async def notify_opted_in(channel, joined_member):
+    opted_in_members = get_opted_in_members()
+    mention_string = ' '.join(f"<@{member_id}>" for member_id in opted_in_members)
+    voice_channel = joined_member.voice.channel  # Get the voice channel
+    now = datetime.datetime.now().strftime("%H:%M") # Get current time in HH:MM format
+    await channel.send(f"--- \n {joined_member.name} ({joined_member.nick}) has joined {voice_channel.mention}! Time of join: {now}\n \n {mention_string} \n---")
+
+def get_opted_in_members():
+    try:
+        with open(OPTED_IN_FILE, 'r') as f:
+            opted_in_members = set(int(line.strip()) for line in f)
+        return opted_in_members
+    except FileNotFoundError:
+        return set()
+
+client.run(TOKEN)
